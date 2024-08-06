@@ -1,0 +1,157 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
+import 'package:test/views/ownerprofil.dart';
+import 'package:test/walkerprofil.dart';
+
+import 'providers/auth.dart';
+import 'services/local_notification_service.dart';
+import 'views/login.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+      options: const FirebaseOptions(
+    apiKey: 'AIzaSyAHUXVLM0UDvp6LkygFxGUSjoceZshfOXs',
+    appId: '1:655709702351:android:0a88c46aac7ff6d80f4fba',
+    messagingSenderId: '655709702351',
+    projectId: 'waggywalkerapp',
+    storageBucket: 'waggywalkerapp.appspot.com',
+  ));
+  FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
+
+  FirebaseMessaging.onBackgroundMessage(backgroundHandler);
+
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+  flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.requestNotificationsPermission();
+
+  LocalNotificationService.initialize();
+
+  runApp(ChangeNotifierProvider(
+    create: ((context) => Auth()),
+    child: const MyApp(),
+  ));
+}
+
+Future<void> backgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(
+      options: const FirebaseOptions(
+    apiKey: 'AIzaSyAHUXVLM0UDvp6LkygFxGUSjoceZshfOXs',
+    appId: '1:655709702351:android:0a88c46aac7ff6d80f4fba',
+    messagingSenderId: '655709702351',
+    projectId: 'waggywalkerapp',
+    storageBucket: 'waggywalkerapp.appspot.com',
+  ));
+  LocalNotificationService.display(message);
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        fontFamily: 'Lemon',
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(fontSize: 16.0, color: Colors.black),
+          bodyMedium: TextStyle(fontSize: 14.0, color: Colors.black),
+          bodySmall: TextStyle(fontSize: 12.0, color: Colors.black),
+          labelLarge: TextStyle(fontSize: 20.0, color: Colors.black),
+          labelMedium: TextStyle(fontSize: 18.0, color: Colors.black),
+          labelSmall: TextStyle(fontSize: 16.0, color: Colors.black),
+          headlineLarge: TextStyle(fontSize: 26.0, color: Colors.black),
+          headlineMedium: TextStyle(fontSize: 20.0, color: Colors.black),
+          headlineSmall: TextStyle(fontSize: 16.0, color: Colors.black),
+        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: const MyHomePage(),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  final storage = const FlutterSecureStorage();
+  late String? key = '';
+  void _attemptAuthentication() async {
+    final String? keyx = await storage.read(key: 'auth');
+    setState(() {
+      key = keyx;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _attemptAuthentication();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: Provider.of<Auth>(context, listen: false).attempt(key),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            color: Colors.white,
+            child: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+                child: const Center(child: CircularProgressIndicator())),
+          );
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else {
+          final auth = Provider.of<Auth>(context);
+          return auth.authenticated
+              ? (auth.isWalker)
+                  ? const Walkerprofil()
+                  : const Ownerprofil()
+              : const Login();
+        }
+      },
+    );
+
+    // return Scaffold(
+    //   body: Center(
+    //     child: Consumer<Auth>(
+    //       builder: (context, value, child) {
+    //         if (value.authenticated) {
+    //           if (value.isWalker) {
+    //             return const Walkerprofil();
+    //           } else {
+    //             return const Ownerprofil();
+    //           }
+    //         } else {
+    //           return const Login();
+    //         }
+    //       },
+    //     ),
+    //   ),
+    // );
+  }
+}

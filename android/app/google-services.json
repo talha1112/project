@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "655709702351",
+    "project_id": "waggywalkerapp",
+    "storage_bucket": "waggywalkerapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:655709702351:android:0a88c46aac7ff6d80f4fba",
+        "android_client_info": {
+          "package_name": "com.waggywalking.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHUXVLM0UDvp6LkygFxGUSjoceZshfOXs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
